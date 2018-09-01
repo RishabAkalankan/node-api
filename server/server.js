@@ -20,6 +20,14 @@ app.post('/todos', (request,response)=> {
     })
 });
 
+app.get('/todos',(request, response)=> {
+    Todo.find().then((docs)=> {
+        response.send({docs});
+    }, (e)=> {
+        response.status(400).send({e});
+    })
+});
+
 
 
 app.listen(3000, ()=> {
