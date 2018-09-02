@@ -1,4 +1,5 @@
 var express = require('express');
+const _ = require('lodash');
 var bodyParser = require('body-parser');
 var { ObjectID } = require('mongodb');
 
@@ -13,10 +14,14 @@ app.use(bodyParser.json());
 
 app.post('/todos', (request, response) => {
     var todo = new Todo({
-        text: request.body.text
+        text: request.body.text,
+        completed: request.body.completed !== undefined ? request.body.completed : null,
+        completedAt: request.body.completed !== undefined && request.body.completed !== false ?
+        `${new Date().getHours()}:${new Date().getMinutes()}, on ${new Date().getDate()} ${new Date().getMonth()+1} ${new Date().getFullYear()}` : null
     });
     todo.save().then((doc) => {
-        response.send(doc);
+        response.send({doc});
+        console.log(request.body.completed);
     }, (e) => {
         response.status(400).send(`Unable to save the todo: ${e.errors.text.message}`)
     })
@@ -68,6 +73,34 @@ app.delete('/todos/:id', (request,response)=> {
     });
 },(e)=> {
     return response.status(400).send()
+});
+
+app.patch('/todos/:id', (request, response) => {
+    var id = request.params.id;
+    var body = _.pick(request
+    .body,['text','completed']);
+    if(!ObjectID.isValid(id)) {
+        return response.status(404).send({
+            errorMessage: 'Bad User ID'
+        });
+    }
+    if(_.isBoolean(body.completed) && body.completed) {
+        body.completedAt = `${new Date().getHours()}:${new Date().getMinutes()}, on ${new Date().getDate()} ${new Date().getMonth()+1} ${new Date().getFullYear()}`;
+    } else {
+        body.completed = false;
+        body.completedAt = null;
+    }
+    Todo.findByIdAndUpdate(id,{$set: body}, {new:true}).then((doc)=> {
+        if(!doc) {
+            return response.status(404).send({
+                errorMessage: 'User not Found'
+            });
+        }
+        return response.send({doc});
+    }, (e) => {
+        return response.status(400).send()
+    });
+
 });
 
 app.listen(port, () => {
