@@ -12,6 +12,7 @@ const port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
 
+/** This section is used to manipluate TODOS */
 app.post('/todos', (request, response) => {
     var todo = new Todo({
         text: request.body.text,
@@ -103,6 +104,23 @@ app.patch('/todos/:id', (request, response) => {
 
 });
 
+/** This section is used to manipulate users */
+
+app.post('/users' , (request, response) => {
+    var body = _.pick(request.body,['email','password'])
+    var user = new User(body);
+    user.save().then(()=> {
+        return user.generateAuthToken()
+    }).then((token)=> {
+        return response.header('x-auth', token).send({user})
+    }).catch((e)=> {
+        response.status(400).send({e});
+    });
+});
+
+
+
+/** Start of the server */
 app.listen(port, () => {
     console.log(`Started on port ${port}`);
 });
