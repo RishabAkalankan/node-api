@@ -120,11 +120,23 @@ app.post('/users' , (request, response) => {
 });
 
 
-app.get('/users/me',authenticate, (request, response)=> {
+app.get('/users/me', authenticate, (request, response)=> {
     response.send(request.user);
 });
 
+// POST -> users/ogin [email,password]
 
+app.post('/users/login', (request, response) => {
+    var body = _.pick(request.body, ['email', 'password']);
+
+    User.findByCredentials(body.email, body.password).then((user) => {
+        return user.generateAuthToken().then((token) => {
+            response.header('x-auth', token).send(user);
+        });
+    }).catch(() => {
+        return response.status(400).send({'error': 'Credentials invalid'});
+    });
+})
 
 /** Start of the server */
 app.listen(port, () => {
