@@ -138,6 +138,16 @@ app.post('/users/login', (request, response) => {
     });
 })
 
+// DELETE -> /users/me/token 
+
+app.delete('/users/me/token', authenticate , (request, response) => {
+    request.user.removeToken(request.token).then(() => {
+        response.status(200).send();
+    }).catch(() => {
+        response.status(400).send();
+    });
+})
+
 /** Start of the server */
 app.listen(port, () => {
     console.log(`Started on port ${port}`);
